@@ -48,7 +48,7 @@ for year in $(seq ${from%-*} ${to%-*}); do
     cur_dir="${HOME}/Maildir/.Archive.${year}.${padded_month}/cur"
     tag="${year}-${padded_month}"
 
-    mkdir -p "${cur_dir}"
+    ${DRYRUN} || mkdir -p "${cur_dir}"
 
     # Get the start of the month
     from="$(get_unix_timestamp "${year}" "${month}")"
