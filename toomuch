@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Archives notmuch email by year and month
+set -e
+
+last_december() {
+  local year=$(date +%Y)
+  let year-- || true
+
+  echo "${year}-12"
+}
+
+get_unix_timestamp() {
+  date --date="$(printf "%d-%0.2d-01" "${1}" "${2}") $3" +%s
+}
+
+# search read email in inbox on the given range
+_notmuch() {
+  from=${1}; shift
+  to=${1}; shift
+  extra=$@
+  notmuch ${extra} \
+    tag:inbox \
+    and not tag:unread \
+    and ${from}..${to}
+}
+
+# TODO accept user input and start month
+from="2010-01"
+to="$(last_december)"
+
+for year in $(seq ${from%-*} ${to%-*}); do
+  for month in {1..12}; do
+    cur_dir="${HOME}/Maildir/.Archive.${year}.${month}/cur"
+    tag="$(printf "%d-%0.2d" "${year}" "${month}")"
+
+    mkdir -p "${cur_dir}"
+
+    # Get the start of the month
+    from="$(get_unix_timestamp "${year}" "${month}")"
+
+    # If current month is december, next month is january of next year
+    if test ${month} -eq 12 ; then
+      month=1
+      let year++ || true
+    else
+      # Increment month to get the next month
+      let month++ || true
+    fi
+
+    # next month minus one second to get the full monthly period
+    to="$(get_unix_timestamp "${year}" "${month}" "- 1 second")"
+
+    # move the files
+    # and tag as archived
+    _notmuch "${from}" "${to}" search --output=files \
+    | xargs --no-run-if-empty mv --target-directory="${cur_dir}" \
+      --verbose --no-clobber \
+    && _notmuch "${from}" "${to}" tag -inbox +archive +${tag}
+  done
+done
+
+# finds the moved files
+notmuch new
