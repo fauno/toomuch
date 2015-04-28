@@ -23,6 +23,27 @@ Then archive!
 toomuch
 ```
 
+## Options
+
+Prepend `DRYRUN=true` to `toomuch` to see what's going to happen:
+
+```bash
+DRYRUN=true toomuch
+```
+
+Pass starting year:
+
+```bash
+toomuch 2013
+```
+
+Pass up to year-month:
+
+```bash
+toomuch 2013 2013-02
+```
+
+
 ## TODO
 
 * Don't hardcode email base directory

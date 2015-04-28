@@ -17,9 +17,9 @@ last_december() {
 }
 
 DRYRUN=${DRYRUN:-false}
-# TODO accept user input and start month
-from="2010-01"
-to="$(last_december)"
+# TODO accept start month
+from="${1:-2010-01}"
+to="${2:-$(last_december)}"
 
 get_unix_timestamp() {
   date --date="$(printf "%d-%0.2d-01" "${1}" "${2}") $3" +%s
@@ -27,9 +27,9 @@ get_unix_timestamp() {
 
 # search read email in inbox on the given range
 _notmuch() {
-  from=${1}; shift
-  to=${1}; shift
-  extra=$@
+  local from=${1}; shift
+  local to=${1}; shift
+  local extra=$@
   notmuch ${extra} \
     tag:inbox \
     and not tag:unread \
@@ -38,20 +38,25 @@ _notmuch() {
 
 move_files() {
   xargs --no-run-if-empty mv --target-directory="${cur_dir}" \
-    --verbose --no-clobber
+    --no-clobber
 }
 
 echo "Archiving..."
+echo "From: ${from}"
+echo "To: ${to}"
 for year in $(seq ${from%-*} ${to%-*}); do
   for month in {1..12}; do
     padded_month="$(printf "%0.2d" "${month}")"
     cur_dir="${HOME}/Maildir/.Archive.${year}.${padded_month}/cur"
     tag="${year}-${padded_month}"
 
+    # run up to this year-month
+    test "${to}" == "${tag}" && break
+
     ${DRYRUN} || mkdir -p "${cur_dir}"
 
     # Get the start of the month
-    from="$(get_unix_timestamp "${year}" "${month}")"
+    unix_from="$(get_unix_timestamp "${year}" "${month}")"
 
     # If current month is december, next month is january of next year
     if test ${month} -eq 12 ; then
@@ -63,19 +68,19 @@ for year in $(seq ${from%-*} ${to%-*}); do
     fi
 
     # next month minus one second to get the full monthly period
-    to="$(get_unix_timestamp "${year}" "${month}" "- 1 second")"
+    unix_to="$(get_unix_timestamp "${year}" "${month}" "- 1 second")"
 
     echo -ne "..${tag}\t"
-    _notmuch "${from}" "${to}" count
+    _notmuch "${unix_from}" "${unix_to}" count
     
     # skip moving if we're dry running
     ${DRYRUN} && continue
 
     # move the files
     # and tag as archived
-    _notmuch "${from}" "${to}" search --output=files \
+    _notmuch "${unix_from}" "${unix_to}" search --output=files \
     | move_files \
-    && _notmuch "${from}" "${to}" tag -inbox +archive +${tag}
+    && _notmuch "${unix_from}" "${unix_to}" tag -inbox +archive +${tag}
   done
 done
 
