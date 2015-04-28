@@ -44,8 +44,9 @@ move_files() {
 echo "Archiving..."
 for year in $(seq ${from%-*} ${to%-*}); do
   for month in {1..12}; do
-    cur_dir="${HOME}/Maildir/.Archive.${year}.${month}/cur"
-    tag="$(printf "%d-%0.2d" "${year}" "${month}")"
+    padded_month="$(printf "%0.2d" "${month}")"
+    cur_dir="${HOME}/Maildir/.Archive.${year}.${padded_month}/cur"
+    tag="${year}-${padded_month}"
 
     mkdir -p "${cur_dir}"
 
