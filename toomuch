@@ -9,6 +9,11 @@ last_december() {
   echo "${year}-12"
 }
 
+DRYRUN=${DRYRUN:-false}
+# TODO accept user input and start month
+from="2010-01"
+to="$(last_december)"
+
 get_unix_timestamp() {
   date --date="$(printf "%d-%0.2d-01" "${1}" "${2}") $3" +%s
 }
@@ -24,10 +29,12 @@ _notmuch() {
     and ${from}..${to}
 }
 
-# TODO accept user input and start month
-from="2010-01"
-to="$(last_december)"
+move_files() {
+  xargs --no-run-if-empty mv --target-directory="${cur_dir}" \
+    --verbose --no-clobber
+}
 
+echo "Archiving..."
 for year in $(seq ${from%-*} ${to%-*}); do
   for month in {1..12}; do
     cur_dir="${HOME}/Maildir/.Archive.${year}.${month}/cur"
@@ -50,14 +57,19 @@ for year in $(seq ${from%-*} ${to%-*}); do
     # next month minus one second to get the full monthly period
     to="$(get_unix_timestamp "${year}" "${month}" "- 1 second")"
 
+    echo -ne "..${tag}\t"
+    _notmuch "${from}" "${to}" count
+    
+    # skip moving if we're dry running
+    ${DRYRUN} && continue
+
     # move the files
     # and tag as archived
     _notmuch "${from}" "${to}" search --output=files \
-    | xargs --no-run-if-empty mv --target-directory="${cur_dir}" \
-      --verbose --no-clobber \
+    | move_files \
     && _notmuch "${from}" "${to}" tag -inbox +archive +${tag}
   done
 done
 
 # finds the moved files
-notmuch new
+${DRYRUN} || notmuch new

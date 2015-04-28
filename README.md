@@ -11,6 +11,14 @@ tags.  Files are moved to ~/Maildir/.Archive.Year.Month/cur
 
 ## Run
 
+See what's going to happen first:
+
+```bash
+DRYRUN=true toomuch
+```
+
+Then archive!
+
 ```bash
 toomuch
 ```
