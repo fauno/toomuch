@@ -27,4 +27,5 @@ toomuch
 
 * Don't hardcode email base directory
 * Be flexible about the range of dates
+* Modify search tags
 
