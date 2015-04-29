@@ -41,6 +41,10 @@ move_files() {
     --no-clobber
 }
 
+remove_files() {
+  xargs --no-run-if-empty rm
+}
+
 echo "Archiving..."
 echo "From: ${from}"
 echo "To: ${to}"
@@ -72,6 +76,9 @@ for year in $(seq ${from%-*} ${to%-*}); do
 
     echo -ne "..${tag}\t"
     _notmuch "${unix_from}" "${unix_to}" count
+
+    echo -ne "..deleted\t"
+    notmuch count --exclude=false tag:deleted and ${unix_from}..${unix_to}
     
     # skip moving if we're dry running
     ${DRYRUN} && continue
@@ -81,6 +88,10 @@ for year in $(seq ${from%-*} ${to%-*}); do
     _notmuch "${unix_from}" "${unix_to}" search --output=files \
     | move_files \
     && _notmuch "${unix_from}" "${unix_to}" tag -inbox +archive +${tag}
+
+    notmuch search --output=files --exclude=false tag:deleted \
+      and ${unix_from}..${unix_to} \
+    | remove_files
   done
 done
 
