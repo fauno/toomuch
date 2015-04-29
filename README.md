@@ -46,6 +46,30 @@ Pass up to year-month:
 toomuch 2013 2013-02
 ```
 
+## Other
+
+`onetoomany` can be used with postfix to deliver email and index it:
+
+```bash
+echo "you  /path/to/onetoomany" >> /etc/postfix/mailbox_commands
+postmap /etc/postfix/mailbox_commands
+postconf -e "mailbox_command_maps=hash:/etc/postfix/mailbox_commands"
+postfix reload
+```
+
+Gotcha: if you're using `afew`, `notmuch insert` will mark your email
+as seen, because of the missing unread tag during indexation.
+
+To work around this, add this filter just before the InboxFilter in
+`~/.config/afew/config`
+
+```bash
+[Filter.1]
+message = Everything new is unread too
+query = tag:new
+tags = +unread
+```
+
 
 ## TODO
 

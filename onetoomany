@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# 
+# Processes email delivered via postfix
+# 
+# © 2015 fauno <fauno@parabola.nu>
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+set -e
+
+# Remove the first line if it starts with From so notmuch doesn't
+# complain about single file mbox
+sed "1{/^From /d}" | notmuch insert
