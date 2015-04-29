@@ -9,6 +9,9 @@ current year.
 Archived email can be found under the `archive` tag plus `year-month`
 tags.  Files are moved to ~/Maildir/.Archive.Year.Month/cur
 
+It'll also phisically remove email tagged as deleted during those
+months.
+
 ## Run
 
 See what's going to happen first:
@@ -49,4 +52,5 @@ toomuch 2013 2013-02
 * Don't hardcode email base directory
 * Be flexible about the range of dates
 * Modify search tags
+* Allow to skip archiving or removal
 
