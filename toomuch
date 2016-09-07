@@ -42,12 +42,14 @@ move_files() {
 }
 
 remove_files() {
-  xargs --no-run-if-empty rm
+  xargs --no-run-if-empty rm -f
 }
 
 echo "Archiving..."
 echo "From: ${from}"
 echo "To: ${to}"
+echo "***"
+echo -e "period\tarchive\tdelete\tkill"
 for year in $(seq ${from%-*} ${to%-*}); do
   for month in {1..12}; do
     padded_month="$(printf "%0.2d" "${month}")"
@@ -74,11 +76,10 @@ for year in $(seq ${from%-*} ${to%-*}); do
     # next month minus one second to get the full monthly period
     unix_to="$(get_unix_timestamp "${year}" "${month}" "- 1 second")"
 
-    echo -ne "..${tag}\t"
-    _notmuch "${unix_from}" "${unix_to}" count
-
-    echo -ne "..deleted\t"
-    notmuch count --exclude=false tag:deleted and ${unix_from}..${unix_to}
+    echo -ne "${tag}\t"
+    echo -ne "$(_notmuch "${unix_from}" "${unix_to}" count)\t"
+    echo -ne "$(notmuch count --exclude=false tag:deleted and ${unix_from}..${unix_to})\t"
+    echo -e  "$(notmuch count --exclude=false tag:killed and ${unix_from}..${unix_to})"
     
     # skip moving if we're dry running
     ${DRYRUN} && continue
@@ -90,6 +91,10 @@ for year in $(seq ${from%-*} ${to%-*}); do
     && _notmuch "${unix_from}" "${unix_to}" tag -inbox +archive +${tag}
 
     notmuch search --output=files --exclude=false tag:deleted \
+      and ${unix_from}..${unix_to} \
+    | remove_files
+
+    notmuch search --output=files --exclude=false tag:killed \
       and ${unix_from}..${unix_to} \
     | remove_files
   done
