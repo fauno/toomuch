@@ -45,6 +45,10 @@ remove_files() {
   xargs --no-run-if-empty rm -f
 }
 
+prepend_tab () {
+  xargs --no-run-if-empty -I {} echo -ne "{}\t"
+}
+
 echo "Archiving..."
 echo "From: ${from}"
 echo "To: ${to}"
@@ -76,10 +80,10 @@ for year in $(seq ${from%-*} ${to%-*}); do
     # next month minus one second to get the full monthly period
     unix_to="$(get_unix_timestamp "${year}" "${month}" "- 1 second")"
 
-    echo -ne "${tag}\t"
-    echo -ne "$(_notmuch "${unix_from}" "${unix_to}" count)\t"
-    echo -ne "$(notmuch count --exclude=false tag:deleted and ${unix_from}..${unix_to})\t"
-    echo -e  "$(notmuch count --exclude=false tag:killed and ${unix_from}..${unix_to})"
+    echo "${tag}" | prepend_tab
+    _notmuch "${unix_from}" "${unix_to}" count | prepend_tab
+    notmuch count --exclude=false tag:deleted and ${unix_from}..${unix_to} | prepend_tab
+    notmuch count --exclude=false tag:killed and ${unix_from}..${unix_to}
     
     # skip moving if we're dry running
     ${DRYRUN} && continue
